@@ -6,7 +6,7 @@
   <title>Notre Cagnotte</title>
 
   <!-- ═══════════════════════════════════════════════════════════════
-       FIREBASE SDK — Importé via CDN (compat mode)
+       FIREBASE SDK — Compat mode (PAS de modular import)
        ═══════════════════════════════════════════════════════════════ -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -17,9 +17,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
-    /* ═══════════════════════════════════════════════════════════════
-       CSS — VARIABLES & RESET
-       ═══════════════════════════════════════════════════════════════ */
     :root {
       --blue-dark: #1a3a5c;
       --blue-mid: #2e6ba6;
@@ -29,7 +26,6 @@
       --white: #ffffff;
       --white-soft: #f0f6fc;
       --gold: #ffd43b;
-      --gold-dark: #f59f00;
       --green: #51cf66;
       --red: #ff6b6b;
       --shadow: 0 8px 32px rgba(26, 58, 92, 0.15);
@@ -49,230 +45,117 @@
       overflow-x: hidden;
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       BACKGROUND DECORATIONS — bulles flottantes
-       ═══════════════════════════════════════════════════════════════ */
-    .bg-bubbles {
-      position: fixed; inset: 0;
-      pointer-events: none; z-index: 0;
-      overflow: hidden;
-    }
+    /* ═══════ BULLES FLOTTANTES ═══════ */
+    .bg-bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .bg-bubbles span {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.07;
-      background: var(--blue-mid);
-      animation: float 20s infinite ease-in-out;
+      position: absolute; border-radius: 50%; opacity: 0.07;
+      background: var(--blue-mid); animation: float 20s infinite ease-in-out;
     }
-    .bg-bubbles span:nth-child(1) { width: 300px; height: 300px; top: -50px; left: -80px; animation-delay: 0s; }
+    .bg-bubbles span:nth-child(1) { width: 300px; height: 300px; top: -50px; left: -80px; }
     .bg-bubbles span:nth-child(2) { width: 200px; height: 200px; top: 30%; right: -60px; animation-delay: -5s; }
     .bg-bubbles span:nth-child(3) { width: 400px; height: 400px; bottom: -100px; left: 30%; animation-delay: -10s; }
     .bg-bubbles span:nth-child(4) { width: 150px; height: 150px; top: 60%; left: 10%; animation-delay: -7s; }
     .bg-bubbles span:nth-child(5) { width: 250px; height: 250px; top: 10%; right: 20%; animation-delay: -3s; }
-
     @keyframes float {
       0%, 100% { transform: translateY(0) scale(1); }
       50% { transform: translateY(-30px) scale(1.05); }
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       LAYOUT
-       ═══════════════════════════════════════════════════════════════ */
+    /* ═══════ LAYOUT ═══════ */
     .page { display: none; position: relative; z-index: 1; }
     .page.active { display: block; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    /* ═══════════════════════════════════════════════════════════════
-       HEADER
-       ═══════════════════════════════════════════════════════════════ */
-    .header {
-      text-align: center;
-      padding: 40px 20px 20px;
-    }
+    /* ═══════ HEADER ═══════ */
+    .header { text-align: center; padding: 36px 16px 16px; }
     .header h1 {
-      font-family: var(--font-display);
-      font-size: clamp(2rem, 6vw, 3.2rem);
-      font-weight: 700;
-      color: var(--blue-dark);
-      letter-spacing: -0.5px;
-      margin-bottom: 8px;
+      font-family: var(--font-display); font-size: clamp(1.5rem, 6vw, 3.2rem);
+      font-weight: 700; color: var(--blue-dark); margin-bottom: 6px;
     }
     .header h1 span {
       background: linear-gradient(135deg, var(--blue-light), var(--blue-mid));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .header p {
-      font-size: 1.1rem;
-      color: var(--blue-mid);
-      font-weight: 600;
-      opacity: 0.8;
-    }
+    .header p { font-size: clamp(0.85rem, 2.5vw, 1.1rem); color: var(--blue-mid); font-weight: 600; opacity: 0.8; }
 
-    /* Lien admin caché */
+    /* ═══════ ADMIN TRIGGER — 48×48 tactile ═══════ */
     .admin-trigger {
-      position: fixed;
-      bottom: 8px; right: 8px;
-      width: 20px; height: 20px;
-      cursor: pointer; opacity: 0;
-      z-index: 999;
+      position: fixed; bottom: 0; right: 0;
+      width: 48px; height: 48px;
+      cursor: pointer; opacity: 0; z-index: 999;
+      -webkit-tap-highlight-color: transparent;
     }
-    .admin-trigger:hover { opacity: 0.15; }
 
-    /* ═══════════════════════════════════════════════════════════════
-       PAGE PUBLIQUE — SECTION MONTANT
-       ═══════════════════════════════════════════════════════════════ */
-    .amount-section {
-      text-align: center;
-      margin: 30px 0 10px;
-    }
+    /* ═══════ MONTANT ═══════ */
+    .amount-section { text-align: center; margin: 20px 0 8px; }
     .amount-display {
-      font-family: var(--font-display);
-      font-size: clamp(2.5rem, 8vw, 4.5rem);
-      font-weight: 700;
-      color: var(--blue-dark);
-      text-shadow: 0 2px 4px rgba(26, 58, 92, 0.1);
+      font-family: var(--font-display); font-size: clamp(2rem, 10vw, 4.5rem);
+      font-weight: 700; color: var(--blue-dark);
     }
     .amount-display .currency { font-size: 0.6em; color: var(--blue-mid); }
     .amount-goal {
-      font-size: 1rem;
-      color: var(--blue-mid);
-      font-weight: 600;
-      margin-top: 4px;
-      opacity: 0.7;
+      font-size: clamp(0.8rem, 2.5vw, 1rem); color: var(--blue-mid);
+      font-weight: 600; margin-top: 4px; opacity: 0.7;
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       JAUGE VERTICALE + CANVAS FIREWORKS
-       ═══════════════════════════════════════════════════════════════ */
+    /* ═══════ JAUGE ═══════ */
     .gauge-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      margin: 30px auto;
-      position: relative;
-      height: 340px;
-      width: 100%;
-      max-width: 500px;
+      display: flex; justify-content: center; align-items: flex-end;
+      margin: 24px auto; position: relative;
+      height: clamp(220px, 40vw, 340px); width: 100%; max-width: 500px;
     }
-
     .gauge-container {
-      position: relative;
-      width: 70px;
-      height: 300px;
-      background: var(--white);
-      border-radius: 35px;
-      border: 4px solid var(--blue-pale);
-      overflow: hidden;
-      box-shadow: var(--shadow), inset 0 2px 8px rgba(26, 58, 92, 0.08);
-      z-index: 2;
+      position: relative; width: clamp(48px, 8vw, 70px); height: clamp(180px, 35vw, 300px);
+      background: var(--white); border-radius: 35px;
+      border: 4px solid var(--blue-pale); overflow: hidden;
+      box-shadow: var(--shadow), inset 0 2px 8px rgba(26, 58, 92, 0.08); z-index: 2;
     }
     .gauge-fill {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 0%;
+      position: absolute; bottom: 0; left: 0; right: 0; height: 0%;
       background: linear-gradient(to top, var(--blue-mid), var(--blue-light), var(--blue-sky));
-      border-radius: 0 0 31px 31px;
-      transition: none;
+      border-radius: 0 0 31px 31px; transition: none;
     }
-    .gauge-fill.animate {
-      transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1);
-    }
+    .gauge-fill.animate { transition: height 2.5s cubic-bezier(0.22, 1, 0.36, 1); }
     .gauge-fill::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      width: 30px; height: 30px;
-      background: radial-gradient(circle, rgba(255,255,255,0.6), transparent);
-      border-radius: 50%;
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 26px; height: 26px;
+      background: radial-gradient(circle, rgba(255,255,255,0.6), transparent); border-radius: 50%;
     }
-
-    /* Marqueurs de jauge */
-    .gauge-marks {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      pointer-events: none;
-    }
+    .gauge-marks { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
     .gauge-mark {
-      position: absolute;
-      right: 6px;
-      width: 14px; height: 2px;
-      background: var(--blue-pale);
-      border-radius: 1px;
+      position: absolute; right: 6px; width: 14px; height: 2px;
+      background: var(--blue-pale); border-radius: 1px;
     }
     .gauge-mark:nth-child(1) { bottom: 25%; }
     .gauge-mark:nth-child(2) { bottom: 50%; }
     .gauge-mark:nth-child(3) { bottom: 75%; }
-
     .gauge-percent {
-      position: absolute;
-      bottom: -32px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--blue-mid);
+      position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--blue-mid);
     }
-
-    /* Canvas pour feux d'artifice */
     #fireworks-canvas {
-      position: absolute;
-      inset: -100px -200px;
-      width: calc(100% + 400px);
-      height: calc(100% + 200px);
-      z-index: 1;
-      pointer-events: none;
+      position: absolute; inset: -100px -200px;
+      width: calc(100% + 400px); height: calc(100% + 200px);
+      z-index: 1; pointer-events: none;
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       IMAGES STICKERS — rotation saccadée
-       ═══════════════════════════════════════════════════════════════ */
+    /* ═══════ STICKERS ═══════ */
     .stickers-row {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
-      margin: 40px auto;
-      max-width: 700px;
+      display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+      margin: 28px auto; max-width: 700px; padding: 0 10px;
     }
     .sticker {
-      width: 180px; height: 180px;
-      background: var(--white);
-      border-radius: 14px;
-      padding: 10px;
+      width: clamp(110px, 28vw, 180px); height: clamp(110px, 28vw, 180px);
+      background: var(--white); border-radius: 14px; padding: 8px;
       box-shadow: var(--shadow-lg), 0 1px 3px rgba(0,0,0,0.08);
-      border: 3px solid var(--white);
-      overflow: hidden;
+      border: 3px solid var(--white); overflow: hidden;
       animation: stickerWobble 3s infinite ease-in-out;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      display: flex; align-items: center; justify-content: center;
     }
     .sticker:nth-child(2) { animation-delay: -1s; }
     .sticker:nth-child(3) { animation-delay: -2s; }
-
-    .sticker img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-    .sticker .placeholder {
-      color: var(--blue-pale);
-      font-size: 3rem;
-      user-select: none;
-    }
-
-    /* Animation saccadée — steps() pour l'effet hachuré */
+    .sticker img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .sticker .placeholder { color: var(--blue-pale); font-size: clamp(1.8rem, 5vw, 3rem); user-select: none; }
     @keyframes stickerWobble {
       0%   { transform: rotate(0deg); }
       10%  { transform: rotate(3deg); }
@@ -283,309 +166,168 @@
       100% { transform: rotate(0deg); }
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       PARTICIPANTS RECAP
-       ═══════════════════════════════════════════════════════════════ */
+    /* ═══════ PARTICIPANTS ═══════ */
     .participants-count {
-      text-align: center;
-      margin: 20px 0 40px;
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      color: var(--blue-mid);
+      text-align: center; margin: 16px 0 32px;
+      font-family: var(--font-display); font-size: clamp(0.9rem, 2.5vw, 1.15rem); color: var(--blue-mid);
     }
-    .participants-count strong {
-      color: var(--blue-dark);
-      font-size: 1.4rem;
-    }
+    .participants-count strong { color: var(--blue-dark); font-size: 1.3em; }
 
-    /* ═══════════════════════════════════════════════════════════════
-       PAGE ADMIN — LOGIN
-       ═══════════════════════════════════════════════════════════════ */
+    /* ═══════ ADMIN LOGIN ═══════ */
     .admin-login {
-      max-width: 400px;
-      margin: 80px auto;
-      background: var(--white);
-      padding: 40px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-lg);
-      text-align: center;
+      max-width: 400px; margin: 50px auto;
+      background: var(--white); padding: clamp(24px, 5vw, 40px);
+      border-radius: var(--radius); box-shadow: var(--shadow-lg); text-align: center;
     }
     .admin-login h2 {
-      font-family: var(--font-display);
-      color: var(--blue-dark);
-      margin-bottom: 24px;
-      font-size: 1.6rem;
+      font-family: var(--font-display); color: var(--blue-dark);
+      margin-bottom: 20px; font-size: clamp(1.2rem, 4vw, 1.6rem);
     }
-    .admin-login .error {
-      color: var(--red);
-      font-size: 0.9rem;
-      margin-bottom: 12px;
-      min-height: 20px;
-    }
+    .admin-login .error { color: var(--red); font-size: 0.9rem; margin-bottom: 10px; min-height: 20px; }
 
-    /* ═══════════════════════════════════════════════════════════════
-       FORMULAIRES — INPUTS & BOUTONS
-       ═══════════════════════════════════════════════════════════════ */
-    .form-group {
-      margin-bottom: 16px;
-      text-align: left;
-    }
+    /* ═══════ INPUTS & BOUTONS ═══════ */
+    .form-group { margin-bottom: 14px; text-align: left; }
     .form-group label {
-      display: block;
-      font-weight: 700;
-      font-size: 0.85rem;
-      color: var(--blue-mid);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: block; font-weight: 700; font-size: 0.8rem; color: var(--blue-mid);
+      margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;
     }
     .form-group input {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid var(--blue-pale);
-      border-radius: 10px;
-      font-family: var(--font-body);
-      font-size: 1rem;
-      color: var(--blue-dark);
-      background: var(--white-soft);
+      width: 100%; padding: 12px 14px; border: 2px solid var(--blue-pale);
+      border-radius: 10px; font-family: var(--font-body);
+      font-size: 16px; /* ≥16px = pas de zoom iOS */
+      color: var(--blue-dark); background: var(--white-soft);
       transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none; appearance: none;
     }
     .form-group input:focus {
-      outline: none;
-      border-color: var(--blue-light);
+      outline: none; border-color: var(--blue-light);
       box-shadow: 0 0 0 3px rgba(74, 158, 237, 0.2);
     }
 
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 28px;
-      border: none;
-      border-radius: 10px;
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 24px; border: none; border-radius: 10px;
+      font-family: var(--font-display); font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+      min-height: 44px; /* cible tactile Apple */
     }
     .btn:active { transform: scale(0.97); }
-
     .btn-primary {
       background: linear-gradient(135deg, var(--blue-mid), var(--blue-light));
-      color: var(--white);
-      box-shadow: 0 4px 14px rgba(46, 107, 166, 0.35);
+      color: var(--white); box-shadow: 0 4px 14px rgba(46, 107, 166, 0.35);
     }
-    .btn-primary:hover {
-      box-shadow: 0 6px 20px rgba(46, 107, 166, 0.45);
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background: var(--red);
-      color: var(--white);
-      padding: 8px 16px;
-      font-size: 0.85rem;
-    }
-    .btn-edit {
-      background: var(--gold);
-      color: var(--blue-dark);
-      padding: 8px 16px;
-      font-size: 0.85rem;
-    }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(46, 107, 166, 0.45); transform: translateY(-1px); }
+    .btn-danger { background: var(--red); color: var(--white); padding: 10px 14px; font-size: 0.85rem; }
+    .btn-edit { background: var(--gold); color: var(--blue-dark); padding: 10px 14px; font-size: 0.85rem; }
     .btn-back {
-      background: transparent;
-      color: var(--blue-mid);
-      border: 2px solid var(--blue-pale);
-      padding: 10px 20px;
-      font-size: 0.9rem;
+      background: transparent; color: var(--blue-mid); border: 2px solid var(--blue-pale);
+      padding: 10px 18px; font-size: 0.9rem;
     }
     .btn-back:hover { background: var(--blue-pale); }
 
-    /* ═══════════════════════════════════════════════════════════════
-       ADMIN DASHBOARD
-       ═══════════════════════════════════════════════════════════════ */
-    .admin-dashboard {
-      max-width: 850px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
+    /* ═══════ ADMIN DASHBOARD ═══════ */
+    .admin-dashboard { max-width: 850px; margin: 30px auto; padding: 0 16px; }
     .admin-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
     }
-    .admin-header h2 {
-      font-family: var(--font-display);
-      color: var(--blue-dark);
-      font-size: 1.6rem;
-    }
-    .admin-actions { display: flex; gap: 10px; }
+    .admin-header h2 { font-family: var(--font-display); color: var(--blue-dark); font-size: clamp(1.2rem, 4vw, 1.6rem); }
+    .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* Carte formulaire */
     .form-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      padding: 30px;
-      box-shadow: var(--shadow);
-      margin-bottom: 30px;
+      background: var(--white); border-radius: var(--radius);
+      padding: clamp(18px, 4vw, 30px); box-shadow: var(--shadow); margin-bottom: 24px;
     }
-    .form-card h3 {
-      font-family: var(--font-display);
-      color: var(--blue-dark);
-      margin-bottom: 20px;
-      font-size: 1.2rem;
-    }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 600px) {
-      .form-row { grid-template-columns: 1fr; }
-    }
+    .form-card h3 { font-family: var(--font-display); color: var(--blue-dark); margin-bottom: 16px; font-size: 1.1rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-    /* Table des contributions */
-    .table-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .table-card h3 {
-      font-family: var(--font-display);
-      color: var(--blue-dark);
-      padding: 20px 24px 12px;
-      font-size: 1.2rem;
-    }
-    .table-wrapper { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .table-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .table-card h3 { font-family: var(--font-display); color: var(--blue-dark); padding: 18px 20px 10px; font-size: 1.1rem; }
+    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; }
     th {
-      background: var(--blue-pale);
-      color: var(--blue-dark);
-      font-weight: 700;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 12px 16px;
-      text-align: left;
+      background: var(--blue-pale); color: var(--blue-dark); font-weight: 700;
+      font-size: 0.75rem; text-transform: uppercase; padding: 10px 12px; text-align: left; white-space: nowrap;
     }
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--blue-pale);
-      font-size: 0.95rem;
-    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--blue-pale); font-size: 0.9rem; white-space: nowrap; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--white-soft); }
+    .td-actions { display: flex; gap: 6px; }
+    .empty-state { text-align: center; padding: 30px; color: var(--blue-mid); opacity: 0.6; white-space: normal; }
 
-    .td-actions { display: flex; gap: 8px; }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px;
-      color: var(--blue-mid);
-      opacity: 0.6;
-      font-size: 1rem;
+    /* ═══════ CARTES MOBILE ═══════ */
+    .mobile-cards { display: none; }
+    .contrib-card {
+      background: var(--white); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+      box-shadow: 0 2px 12px rgba(26, 58, 92, 0.1);
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
     }
-
-    /* ═══════════════════════════════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════════════════════════════ */
-    .footer {
-      text-align: center;
-      padding: 30px;
-      color: var(--blue-mid);
-      opacity: 0.5;
-      font-size: 0.85rem;
+    .contrib-card-info { flex: 1; min-width: 0; }
+    .contrib-card-name { font-weight: 700; color: var(--blue-dark); font-size: 0.95rem; margin-bottom: 2px; }
+    .contrib-card-details { font-size: 0.8rem; color: var(--blue-mid); opacity: 0.8; }
+    .contrib-card-amount {
+      font-family: var(--font-display); font-weight: 700;
+      font-size: 1.15rem; color: var(--blue-dark); white-space: nowrap;
     }
+    .contrib-card-actions { display: flex; gap: 6px; margin-top: 8px; }
 
-    /* ═══════════════════════════════════════════════════════════════
-       TOAST NOTIFICATION
-       ═══════════════════════════════════════════════════════════════ */
+    .footer { text-align: center; padding: 24px; color: var(--blue-mid); opacity: 0.5; font-size: 0.85rem; }
+
+    /* ═══════ TOAST ═══════ */
     .toast {
-      position: fixed;
-      bottom: 30px; left: 50%;
+      position: fixed; bottom: 30px; left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: var(--blue-dark);
-      color: var(--white);
-      padding: 14px 28px;
-      border-radius: 10px;
-      font-family: var(--font-display);
-      font-weight: 600;
-      box-shadow: var(--shadow-lg);
-      z-index: 9999;
-      opacity: 0;
+      background: var(--blue-dark); color: var(--white);
+      padding: 12px 24px; border-radius: 10px;
+      font-family: var(--font-display); font-weight: 600; font-size: 0.95rem;
+      box-shadow: var(--shadow-lg); z-index: 9999; opacity: 0;
       transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s;
+      max-width: 90vw; text-align: center;
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* ═══════════════════════════════════════════════════════════════
-       LOADING SPINNER
+       RESPONSIVE ≤ 600px
        ═══════════════════════════════════════════════════════════════ */
-    .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid var(--blue-pale);
-      border-top-color: var(--blue-mid);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 40px auto;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 600px) {
+      .header { padding: 24px 12px 10px; }
+      .form-row { grid-template-columns: 1fr; gap: 10px; }
 
-    /* ═══════════════════════════════════════════════════════════════
-       CONFETTI (alternative légère aux feux d'artifice)
-       ═══════════════════════════════════════════════════════════════ */
-    .confetti-piece {
-      position: absolute;
-      width: 8px; height: 8px;
-      border-radius: 2px;
-      opacity: 0;
+      /* Cartes au lieu du tableau */
+      .table-wrapper { display: none; }
+      .mobile-cards { display: block; padding: 0 14px 14px; }
+
+      .admin-header { flex-direction: column; align-items: stretch; }
+      .admin-actions { width: 100%; }
+      .admin-actions .btn { flex: 1; text-align: center; font-size: 0.8rem; padding: 10px 8px; }
+
+      .btn-primary { width: 100%; }
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Bulles d'arrière-plan -->
-  <div class="bg-bubbles">
-    <span></span><span></span><span></span><span></span><span></span>
-  </div>
+  <div class="bg-bubbles"><span></span><span></span><span></span><span></span><span></span></div>
 
-  <!-- Lien caché vers l'admin (coin bas-droit) -->
-  <div class="admin-trigger" onclick="showPage('admin')" title=""></div>
+  <!-- Zone tactile admin — 48×48px, coin bas-droit -->
+  <div class="admin-trigger" onclick="showPage('admin')"></div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       PAGE PUBLIQUE
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- ═══════ PAGE PUBLIQUE ═══════ -->
   <div id="page-public" class="page active">
     <div class="container">
-
-      <!-- En-tête -->
       <div class="header">
         <h1>🎉 <span>Cagnotte de Loulou</span> 🎉</h1>
         <p>De beaux cadeaux pour notre Docteur !</p>
       </div>
-      
-      <!-- Stickers / Images -->
+
       <div class="stickers-row">
-        <!-- Image 1 — Remplacer le contenu par <img src="votre-image.jpg" alt="..." /> -->
         <div class="sticker">
-          <span class="placeholder"><img src="img/SD_AD_pressed.png" alt="Description de l'image" /></span>
+          <img src="img/SD_AD_pressed.png" alt="Photo"
+               onerror="this.outerHTML='<span class=placeholder>📸</span>'" />
         </div>
       </div>
 
-      <!-- Montant total -->
       <div class="amount-section">
         <div class="amount-display">
           <span id="total-amount">0</span><span class="currency"> €</span>
@@ -593,8 +335,6 @@
         <div class="amount-goal">Objectif : <span id="goal-display">2 000</span> €</div>
       </div>
 
-
-      <!-- Jauge verticale + Feux d'artifice -->
       <div class="gauge-wrapper">
         <canvas id="fireworks-canvas"></canvas>
         <div class="gauge-container">
@@ -608,19 +348,17 @@
         <span class="gauge-percent" id="gauge-percent">0%</span>
       </div>
 
-      <!-- Nombre de participants -->
       <div class="participants-count">
         <strong id="participants-count">0</strong> participant(s) ont contribué
       </div>
+      <div class="footer">Créé avec ❤️</div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       PAGE ADMIN — LOGIN
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- ═══════ PAGE ADMIN — LOGIN ═══════ -->
   <div id="page-admin" class="page">
     <div class="container">
-      <div class="admin-login" id="admin-login">
+      <div class="admin-login">
         <h2>🔒 Administration</h2>
         <div class="error" id="login-error"></div>
         <div class="form-group">
@@ -639,22 +377,17 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       PAGE ADMIN — DASHBOARD
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- ═══════ PAGE ADMIN — DASHBOARD ═══════ -->
   <div id="page-dashboard" class="page">
     <div class="admin-dashboard">
-
-      <!-- Header admin -->
       <div class="admin-header">
         <h2>📊 Tableau de bord</h2>
         <div class="admin-actions">
           <button class="btn btn-back" onclick="handleLogout()">Déconnexion</button>
-          <button class="btn btn-back" onclick="showPage('public')">👁 Voir la cagnotte</button>
+          <button class="btn btn-back" onclick="showPage('public')">👁 Cagnotte</button>
         </div>
       </div>
 
-      <!-- Formulaire d'ajout / modification -->
       <div class="form-card">
         <h3 id="form-title">➕ Ajouter une contribution</h3>
         <div class="form-row">
@@ -678,111 +411,72 @@
           </div>
         </div>
         <br />
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-primary" id="btn-submit" onclick="handleSubmit()">Ajouter</button>
           <button class="btn btn-back" id="btn-cancel" onclick="cancelEdit()" style="display:none">Annuler</button>
         </div>
       </div>
 
-      <!-- Table des contributions -->
       <div class="table-card">
         <h3>📋 Contributions</h3>
         <div class="table-wrapper">
           <table>
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Montant</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Nom</th><th>Prénom</th><th>Montant</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody id="contributions-table">
               <tr><td colspan="5" class="empty-state">Chargement...</td></tr>
             </tbody>
           </table>
         </div>
+        <div class="mobile-cards" id="contributions-cards"></div>
       </div>
-
       <div class="footer">Administration — Cagnotte</div>
     </div>
   </div>
 
-  <!-- Toast notification -->
   <div class="toast" id="toast"></div>
 
-  <!-- ═══════════════════════════════════════════════════════════════════
-       ═══════════════════════════════════════════════════════════════════
-       JAVASCRIPT — BACK-END (Firebase) + FRONT-END (SPA Logic)
-       ═══════════════════════════════════════════════════════════════════
-       ═══════════════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════
+       JAVASCRIPT — Pas de « import » ici, on utilise firebase compat
+       ═══════════════════════════════════════════════════════════════ -->
   <script>
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    /* ═══════════════════════════════════════════════════════════════
-       1. CONFIGURATION FIREBASE
-       ══════════════════════════════════════════════════════════════
-       ⚠️  REMPLACEZ les valeurs ci-dessous par celles de votre
-           projet Firebase (Console → Paramètres du projet → Config).
-       ═══════════════════════════════════════════════════════════════ */
-
-
-
+    /* 1. FIREBASE CONFIG */
     const firebaseConfig = {
-          apiKey: "AIzaSyDWU-qWp_dUc-SMoRIlNX1SGlXHOHRMMKY",
-          authDomain: "louiscagnotte-d23a4.firebaseapp.com",
-          projectId: "louiscagnotte-d23a4",
-          storageBucket: "louiscagnotte-d23a4.firebasestorage.app",
-          messagingSenderId: "990164676560",
-          appId: "1:990164676560:web:4a047d791bf328760053d5"
-        };
-
-    // Initialisation Firebase
+      apiKey: "AIzaSyDWU-qWp_dUc-SMoRIlNX1SGlXHOHRMMKY",
+      authDomain: "louiscagnotte-d23a4.firebaseapp.com",
+      projectId: "louiscagnotte-d23a4",
+      storageBucket: "louiscagnotte-d23a4.firebasestorage.app",
+      messagingSenderId: "990164676560",
+      appId: "1:990164676560:web:4a047d791bf328760053d5"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    /* ═══════════════════════════════════════════════════════════════
-       2. CONFIGURATION DE LA CAGNOTTE
-       ═══════════════════════════════════════════════════════════════ */
-    const GOAL_AMOUNT    = 2000;   // Objectif en euros
-    const ADMIN_LOGIN    = "HLADMIN";
-    // Le code d'accès est stocké dans Firestore (collection "config",
-    // document "admin"). À défaut, un code par défaut est utilisé :
-    const DEFAULT_CODE   = "cagnotte2024";
+    /* 2. CONFIG CAGNOTTE */
+    const GOAL_AMOUNT  = 2000;
+    const ADMIN_LOGIN  = "HLADMIN";
+    const DEFAULT_CODE = "cagnotte2024";
 
-    /* ═══════════════════════════════════════════════════════════════
-       3. ÉTAT DE L'APPLICATION
-       ═══════════════════════════════════════════════════════════════ */
-    let contributions    = [];     // Toutes les contributions
-    let editingId        = null;   // ID du document en cours d'édition
-    let isLoggedIn       = false;
-    let adminCode        = DEFAULT_CODE;
-    let fireworksTimeout = null;
+    /* 3. ÉTAT */
+    let contributions = [], editingId = null, isLoggedIn = false;
+    let adminCode = DEFAULT_CODE, fireworksTimeout = null;
 
-    /* ═══════════════════════════════════════════════════════════════
-       4. NAVIGATION SPA
-       ═══════════════════════════════════════════════════════════════ */
+    /* 4. NAVIGATION */
     function showPage(name) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-
       if (name === 'admin' && isLoggedIn) {
         document.getElementById('page-dashboard').classList.add('active');
       } else if (name === 'admin') {
         document.getElementById('page-admin').classList.add('active');
       } else {
         document.getElementById('page-public').classList.add('active');
-        // Relancer l'animation de la jauge au retour
         setTimeout(() => animateGauge(), 300);
       }
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       5. AUTHENTIFICATION ADMIN
-       ═══════════════════════════════════════════════════════════════ */
+    /* 5. AUTH */
     function handleLogin() {
       const id   = document.getElementById('login-id').value.trim();
       const pass = document.getElementById('login-pass').value.trim();
-
       if (id === ADMIN_LOGIN && pass === adminCode) {
         isLoggedIn = true;
         document.getElementById('login-error').textContent = '';
@@ -795,140 +489,79 @@
         document.getElementById('login-error').textContent = 'Identifiant ou code incorrect.';
       }
     }
+    function handleLogout() { isLoggedIn = false; showPage('admin'); }
+    document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+    document.getElementById('login-id').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-pass').focus(); });
 
-    function handleLogout() {
-      isLoggedIn = false;
-      showPage('admin');
-    }
-
-    // Validation par Enter sur le formulaire login
-    document.getElementById('login-pass').addEventListener('keydown', e => {
-      if (e.key === 'Enter') handleLogin();
-    });
-
-    /* ═══════════════════════════════════════════════════════════════
-       6. CRUD — FIREBASE FIRESTORE
-       ═══════════════════════════════════════════════════════════════ */
-
-    /** CREATE — Ajouter une contribution */
+    /* 6. CRUD FIRESTORE */
     async function createContribution(data) {
       try {
         await db.collection('contributions').add({
-          nom:     data.nom,
-          prenom:  data.prenom,
-          montant: parseFloat(data.montant),
-          date:    data.date,
+          nom: data.nom, prenom: data.prenom,
+          montant: parseFloat(data.montant), date: data.date,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         toast('Contribution ajoutée ✓');
-      } catch (err) {
-        console.error('Erreur création :', err);
-        toast('Erreur lors de l\'ajout');
-      }
+      } catch (err) { console.error(err); toast("Erreur lors de l'ajout"); }
     }
 
-    /** READ — Charger toutes les contributions (temps réel) */
     function loadContributions() {
-      db.collection('contributions')
-        .orderBy('createdAt', 'desc')
-        .onSnapshot(snapshot => {
-          contributions = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          renderTable();
-          updatePublicView();
-        }, err => {
-          console.error('Erreur lecture :', err);
-        });
+      db.collection('contributions').orderBy('createdAt', 'desc')
+        .onSnapshot(snap => {
+          contributions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderTable(); renderCards(); updatePublicView();
+        }, err => console.error(err));
     }
 
-    /** UPDATE — Modifier une contribution */
     async function updateContribution(id, data) {
       try {
         await db.collection('contributions').doc(id).update({
-          nom:     data.nom,
-          prenom:  data.prenom,
-          montant: parseFloat(data.montant),
-          date:    data.date
+          nom: data.nom, prenom: data.prenom,
+          montant: parseFloat(data.montant), date: data.date
         });
         toast('Contribution modifiée ✓');
-      } catch (err) {
-        console.error('Erreur mise à jour :', err);
-        toast('Erreur lors de la modification');
-      }
+      } catch (err) { console.error(err); toast('Erreur lors de la modification'); }
     }
 
-    /** DELETE — Supprimer une contribution */
     async function deleteContribution(id) {
       if (!confirm('Supprimer cette contribution ?')) return;
-      try {
-        await db.collection('contributions').doc(id).delete();
-        toast('Contribution supprimée');
-      } catch (err) {
-        console.error('Erreur suppression :', err);
-        toast('Erreur lors de la suppression');
-      }
+      try { await db.collection('contributions').doc(id).delete(); toast('Contribution supprimée'); }
+      catch (err) { console.error(err); toast('Erreur lors de la suppression'); }
     }
 
-    /** Charger le code admin depuis Firestore (optionnel) */
     async function loadAdminCode() {
       try {
         const doc = await db.collection('config').doc('admin').get();
-        if (doc.exists && doc.data().code) {
-          adminCode = doc.data().code;
-        }
-      } catch (err) {
-        console.warn('Code admin par défaut utilisé.');
-      }
+        if (doc.exists && doc.data().code) adminCode = doc.data().code;
+      } catch (e) { console.warn('Code admin par défaut utilisé.'); }
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       7. GESTION DU FORMULAIRE
-       ═══════════════════════════════════════════════════════════════ */
+    /* 7. FORMULAIRE */
     function handleSubmit() {
-      const nom     = document.getElementById('input-nom').value.trim();
-      const prenom  = document.getElementById('input-prenom').value.trim();
+      const nom = document.getElementById('input-nom').value.trim();
+      const prenom = document.getElementById('input-prenom').value.trim();
       const montant = document.getElementById('input-montant').value.trim();
-      const date    = document.getElementById('input-date').value;
-
-      if (!nom || !prenom || !montant || !date) {
-        toast('Veuillez remplir tous les champs');
-        return;
-      }
-
-      if (parseFloat(montant) <= 0) {
-        toast('Le montant doit être positif');
-        return;
-      }
-
+      const date = document.getElementById('input-date').value;
+      if (!nom || !prenom || !montant || !date) { toast('Veuillez remplir tous les champs'); return; }
+      if (parseFloat(montant) <= 0) { toast('Le montant doit être positif'); return; }
       const data = { nom, prenom, montant, date };
-
-      if (editingId) {
-        updateContribution(editingId, data);
-        cancelEdit();
-      } else {
-        createContribution(data);
-      }
-
+      if (editingId) { updateContribution(editingId, data); cancelEdit(); }
+      else { createContribution(data); }
       clearForm();
     }
-
     function startEdit(id) {
       const c = contributions.find(x => x.id === id);
       if (!c) return;
       editingId = id;
-      document.getElementById('input-nom').value     = c.nom;
-      document.getElementById('input-prenom').value   = c.prenom;
-      document.getElementById('input-montant').value   = c.montant;
-      document.getElementById('input-date').value      = c.date;
+      document.getElementById('input-nom').value = c.nom;
+      document.getElementById('input-prenom').value = c.prenom;
+      document.getElementById('input-montant').value = c.montant;
+      document.getElementById('input-date').value = c.date;
       document.getElementById('form-title').textContent = '✏️ Modifier la contribution';
       document.getElementById('btn-submit').textContent = 'Sauvegarder';
       document.getElementById('btn-cancel').style.display = 'inline-flex';
-      // Scroll vers le formulaire
       document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth' });
     }
-
     function cancelEdit() {
       editingId = null;
       document.getElementById('form-title').textContent = '➕ Ajouter une contribution';
@@ -936,225 +569,123 @@
       document.getElementById('btn-cancel').style.display = 'none';
       clearForm();
     }
-
     function clearForm() {
-      document.getElementById('input-nom').value     = '';
-      document.getElementById('input-prenom').value   = '';
-      document.getElementById('input-montant').value   = '';
-      document.getElementById('input-date').value      = '';
+      ['input-nom','input-prenom','input-montant','input-date'].forEach(id => document.getElementById(id).value = '');
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       8. RENDU DU TABLEAU ADMIN
-       ═══════════════════════════════════════════════════════════════ */
+    /* 8. RENDU TABLE (desktop) */
     function renderTable() {
-      const tbody = document.getElementById('contributions-table');
-
-      if (contributions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aucune contribution pour le moment.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = contributions.map(c => `
-        <tr>
-          <td>${escapeHtml(c.nom)}</td>
-          <td>${escapeHtml(c.prenom)}</td>
-          <td><strong>${parseFloat(c.montant).toFixed(2)} €</strong></td>
-          <td>${formatDate(c.date)}</td>
-          <td>
-            <div class="td-actions">
-              <button class="btn btn-edit" onclick="startEdit('${c.id}')">✏️</button>
-              <button class="btn btn-danger" onclick="deleteContribution('${c.id}')">🗑️</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      const tb = document.getElementById('contributions-table');
+      if (!contributions.length) { tb.innerHTML = '<tr><td colspan="5" class="empty-state">Aucune contribution.</td></tr>'; return; }
+      tb.innerHTML = contributions.map(c => `<tr>
+        <td>${esc(c.nom)}</td><td>${esc(c.prenom)}</td>
+        <td><strong>${parseFloat(c.montant).toFixed(2)} €</strong></td>
+        <td>${fmtDate(c.date)}</td>
+        <td><div class="td-actions">
+          <button class="btn btn-edit" onclick="startEdit('${c.id}')">✏️</button>
+          <button class="btn btn-danger" onclick="deleteContribution('${c.id}')">🗑️</button>
+        </div></td></tr>`).join('');
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       9. MISE À JOUR DE LA VUE PUBLIQUE
-       ═══════════════════════════════════════════════════════════════ */
+    /* 8b. RENDU CARTES (mobile) */
+    function renderCards() {
+      const el = document.getElementById('contributions-cards');
+      if (!el) return;
+      if (!contributions.length) { el.innerHTML = '<div class="empty-state">Aucune contribution.</div>'; return; }
+      el.innerHTML = contributions.map(c => `<div class="contrib-card">
+        <div class="contrib-card-info">
+          <div class="contrib-card-name">${esc(c.prenom)} ${esc(c.nom)}</div>
+          <div class="contrib-card-details">${fmtDate(c.date)}</div>
+          <div class="contrib-card-actions">
+            <button class="btn btn-edit" onclick="startEdit('${c.id}')">✏️</button>
+            <button class="btn btn-danger" onclick="deleteContribution('${c.id}')">🗑️</button>
+          </div>
+        </div>
+        <div class="contrib-card-amount">${parseFloat(c.montant).toFixed(2)} €</div>
+      </div>`).join('');
+    }
+
+    /* 9. VUE PUBLIQUE */
     function updatePublicView() {
-      const total = contributions.reduce((sum, c) => sum + (parseFloat(c.montant) || 0), 0);
-      const percent = Math.min((total / GOAL_AMOUNT) * 100, 100);
-
-      // Compteur animé
+      const total = contributions.reduce((s, c) => s + (parseFloat(c.montant) || 0), 0);
       animateCounter(total);
-
-      // Participants
       document.getElementById('participants-count').textContent = contributions.length;
-
-      // Objectif
       document.getElementById('goal-display').textContent = GOAL_AMOUNT.toLocaleString('fr-FR');
-
-      // Jauge
-      animateGauge(percent);
+      animateGauge(Math.min((total / GOAL_AMOUNT) * 100, 100));
     }
-
-    /** Compteur qui s'incrémente avec animation */
     function animateCounter(target) {
       const el = document.getElementById('total-amount');
       const start = parseFloat(el.textContent.replace(/\s/g, '').replace(',', '.')) || 0;
-      const duration = 1500;
-      const startTime = performance.now();
-
-      function tick(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        // Easing out cubic
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = start + (target - start) * eased;
-        el.textContent = current.toLocaleString('fr-FR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-        if (progress < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
+      const dur = 1500, t0 = performance.now();
+      (function tick(now) {
+        const p = Math.min((now - t0) / dur, 1);
+        el.textContent = (start + (target - start) * (1 - Math.pow(1 - p, 3)))
+          .toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
     }
-
-    /** Animation de la jauge verticale */
     function animateGauge(percent) {
       if (percent === undefined) {
-        const total = contributions.reduce((sum, c) => sum + (parseFloat(c.montant) || 0), 0);
-        percent = Math.min((total / GOAL_AMOUNT) * 100, 100);
+        const t = contributions.reduce((s, c) => s + (parseFloat(c.montant) || 0), 0);
+        percent = Math.min((t / GOAL_AMOUNT) * 100, 100);
       }
-
       const fill = document.getElementById('gauge-fill');
-      const percentLabel = document.getElementById('gauge-percent');
-
-      // Reset pour rejouer l'animation
-      fill.classList.remove('animate');
-      fill.style.height = '0%';
-
-      // Forcer le reflow
+      const lbl = document.getElementById('gauge-percent');
+      fill.classList.remove('animate'); fill.style.height = '0%';
       void fill.offsetHeight;
-
-      // Lancer l'animation
-      fill.classList.add('animate');
-      fill.style.height = percent + '%';
-      percentLabel.textContent = Math.round(percent) + '%';
-
-      // Feux d'artifice à la fin de l'animation
+      fill.classList.add('animate'); fill.style.height = percent + '%';
+      lbl.textContent = Math.round(percent) + '%';
       if (fireworksTimeout) clearTimeout(fireworksTimeout);
-      fireworksTimeout = setTimeout(() => {
-        launchFireworks();
-      }, 2700);
+      fireworksTimeout = setTimeout(() => launchFireworks(), 2700);
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       10. FEUX D'ARTIFICE — Canvas Animation
-       ═══════════════════════════════════════════════════════════════ */
+    /* 10. FEUX D'ARTIFICE */
     function launchFireworks() {
-      const canvas = document.getElementById('fireworks-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const rect = canvas.parentElement.getBoundingClientRect();
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-
-      const particles = [];
-      const colors = ['#4a9eed', '#7ec8f8', '#ffd43b', '#ff6b6b', '#51cf66', '#ffffff', '#2e6ba6'];
-
-      // Créer les particules — 3 explosions
-      for (let burst = 0; burst < 3; burst++) {
-        const cx = canvas.width / 2 + (Math.random() - 0.5) * 200;
-        const cy = canvas.height * 0.3 + (Math.random() - 0.5) * 100;
-        const count = 30 + Math.floor(Math.random() * 20);
-
-        for (let i = 0; i < count; i++) {
-          const angle = (Math.PI * 2 / count) * i + Math.random() * 0.3;
-          const speed = 2 + Math.random() * 4;
-          particles.push({
-            x: cx, y: cy,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            life: 1,
-            decay: 0.01 + Math.random() * 0.015,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            size: 2 + Math.random() * 3,
-            delay: burst * 15
-          });
+      const cv = document.getElementById('fireworks-canvas');
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
+      const P = [], colors = ['#4a9eed','#7ec8f8','#ffd43b','#ff6b6b','#51cf66','#fff','#2e6ba6'];
+      for (let b = 0; b < 3; b++) {
+        const cx = cv.width/2 + (Math.random()-.5)*200, cy = cv.height*.3 + (Math.random()-.5)*100;
+        for (let i = 0, n = 30+~~(Math.random()*20); i < n; i++) {
+          const a = (Math.PI*2/n)*i + Math.random()*.3, s = 2+Math.random()*4;
+          P.push({ x:cx,y:cy, vx:Math.cos(a)*s, vy:Math.sin(a)*s,
+            life:1, decay:.01+Math.random()*.015,
+            color:colors[~~(Math.random()*colors.length)], size:2+Math.random()*3, delay:b*15 });
         }
       }
-
-      let frame = 0;
-      function animate() {
-        frame++;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+      (function draw() {
+        ctx.clearRect(0,0,cv.width,cv.height);
         let alive = false;
-        for (const p of particles) {
+        for (const p of P) {
           if (p.delay > 0) { p.delay--; alive = true; continue; }
-          if (p.life <= 0) continue;
-          alive = true;
-
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.06; // gravité
-          p.vx *= 0.98;
-          p.life -= p.decay;
-
-          ctx.globalAlpha = Math.max(p.life, 0);
-          ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Traînée
-          ctx.globalAlpha = Math.max(p.life * 0.3, 0);
-          ctx.beginPath();
-          ctx.arc(p.x - p.vx, p.y - p.vy, p.size * p.life * 0.5, 0, Math.PI * 2);
-          ctx.fill();
+          if (p.life <= 0) continue; alive = true;
+          p.x += p.vx; p.y += p.vy; p.vy += .06; p.vx *= .98; p.life -= p.decay;
+          ctx.globalAlpha = Math.max(p.life,0); ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+          ctx.globalAlpha = Math.max(p.life*.3,0);
+          ctx.beginPath(); ctx.arc(p.x-p.vx,p.y-p.vy,p.size*p.life*.5,0,Math.PI*2); ctx.fill();
         }
-
         ctx.globalAlpha = 1;
-        if (alive) requestAnimationFrame(animate);
-      }
-      animate();
+        if (alive) requestAnimationFrame(draw);
+      })();
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       11. UTILITAIRES
-       ═══════════════════════════════════════════════════════════════ */
-
-    /** Échappement HTML pour éviter les injections XSS */
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
+    /* 11. UTILS */
+    function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+    function fmtDate(s) { if (!s) return '—'; const p = s.split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : s; }
+    function toast(m) {
+      const el = document.getElementById('toast'); el.textContent = m;
+      el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000);
     }
 
-    /** Formatage de date FR */
-    function formatDate(dateStr) {
-      if (!dateStr) return '—';
-      const parts = dateStr.split('-');
-      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      return dateStr;
-    }
-
-    /** Toast notification */
-    function toast(message) {
-      const el = document.getElementById('toast');
-      el.textContent = message;
-      el.classList.add('show');
-      setTimeout(() => el.classList.remove('show'), 3000);
-    }
-
-    /* ═══════════════════════════════════════════════════════════════
-       12. INITIALISATION
-       ═══════════════════════════════════════════════════════════════ */
-    (async function init() {
-      // Charger le code admin (s'il existe dans Firestore)
+    /* 12. INIT */
+    (async function() {
       await loadAdminCode();
-
-      // Initialiser la date du formulaire à aujourd'hui
       document.getElementById('input-date').valueAsDate = new Date();
-
-      // Écoute en temps réel des contributions (même pour la page publique)
       loadContributions();
     })();
   </script>
-
 </body>
 </html>
